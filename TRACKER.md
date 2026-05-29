@@ -6,7 +6,7 @@ This document maintains the active context of work, tracking implemented feature
 
 ## 📋 Project Status Summary
 
-* **Active Milestone**: [Milestone M2 — Multi-Agent Handoff (Web)](#milestone-m2--multi-agent-handoff-web)
+* **Active Milestone**: [Milestone M3 — Telephony (Plivo) Inbound](#milestone-m3--telephony-plivo-inbound)
 * **Active Branch**: `main`
 * **GitHub Repository**: [harsimran-preet/preet-voicebot-platform](https://github.com/harsimran-preet/preet-voicebot-platform)
 * **Last Verified Date**: 2026-05-29
@@ -33,18 +33,24 @@ This document maintains the active context of work, tracking implemented feature
 
 ### Milestone M2 — Multi-Agent Handoff (Web)
 * **Goal**: Transition from a single bot to a router -> specialist multi-agent topology over the AgentBus.
-* **Status**: 🟡 **IN PROGRESS**
-* **Active Tasks**:
-  - [ ] Add `pipecat-ai-subagents` and stand up the shared **AgentBus** and `AgentRunner` topology.
-  - [ ] Implement the **Router Agent** (Intent Classification & Language ID) using Google Gemini.
-  - [ ] Set up the **Support Specialist** free-form LLM agent using OpenAI.
-  - [ ] Establish mid-call **handoff** and `return_to_router` protocols.
-  - [ ] Implement **summarize-on-handoff** context aggregator.
-  - [ ] Add active-agent visual indicators to the web console.
+* **Status**: 🟢 **COMPLETED** (2026-05-29)
+* **Deliverables**:
+  - Wired in-memory `AsyncQueueBus` and standard `AgentRunner`.
+  - Created **RouterAgent** using fast Google Gemini for intent classification.
+  - Created **SupportAgent** using OpenAI for complex customer help reasoning.
+  - Established `handoff_to_support` and `return_to_router` mid-call handoff protocols.
+  - Added real-time active agent telemetry (using `ServerMessage`) feeding the frontend console.
+  - Designed beautiful glowing UI active agent indicators inside the operator dashboard.
 
 ### Milestone M3 — Telephony (Plivo) Inbound
 * **Goal**: Connect phone lines to the multi-agent voicebot fleet.
-* **Status**: ⚪ **NOT STARTED**
+* **Status**: 🟡 **IN PROGRESS**
+* **Active Tasks**:
+  - [ ] Implement `PlivoFrameSerializer` + `WebSocketServerTransport` for 8 kHz μ-law audio stream.
+  - [ ] Setup `/answer` XML endpoint serving bidirectional streaming payload.
+  - [ ] Setup `/ws` WebSocket pipeline handler for incoming phone media streams.
+  - [ ] Verify DTMF digit collection as input pipeline events.
+  - [ ] Verify auto call termination (`auto_hang_up`) upon pipeline end.
 
 ### Milestone M4 — Specialists + Flows + Outbound
 * **Goal**: Add Sales, Billing, and structured Pipecat Flows for verification.
@@ -62,7 +68,9 @@ This document maintains the active context of work, tracking implemented feature
 |---|---|---|
 | [run.sh](run.sh) | Starter command that launches both servers concurrently. | 🟢 Completed |
 | [server/app.py](server/app.py) | FastAPI entrypoint + WebRTC signaling handshakes. | 🟢 Completed |
-| [server/pipeline/core.py](server/pipeline/core.py) | Main Pipecat voice pipeline (Soniox -> LLM -> Cartesia). | 🟢 Completed |
+| [server/pipeline/core.py](server/pipeline/core.py) | Orchestrates AgentRunner, AsyncQueueBus, and bridge. | 🟢 Completed |
 | [server/pipeline/llm_adapter.py](server/pipeline/llm_adapter.py) | Dynamic service adapter for OpenAI and Gemini. | 🟢 Completed |
-| [web/src/App.tsx](web/src/App.tsx) | Live dashboard with custom telemetry latency meters. | 🟢 Completed |
+| [server/agents/router.py](server/agents/router.py) | Gemini-based classification and routing agent. | 🟢 Completed |
+| [server/agents/support.py](server/agents/support.py) | OpenAI-based technical troubleshooting specialist agent. | 🟢 Completed |
+| [web/src/App.tsx](web/src/App.tsx) | Live dashboard with subagent and latency indicators. | 🟢 Completed |
 | [web/src/index.css](web/src/index.css) | Glowing dark-mode visual theme and typography. | 🟢 Completed |
