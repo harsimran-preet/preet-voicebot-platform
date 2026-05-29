@@ -155,14 +155,14 @@ async def run_voice_pipeline(transport: Any, webrtc_connection: Any = None) -> N
             bus=bus,
             active=active
         )
-        runner.add_agent(agent)
+        await runner.add_agent(agent)
         
         # Telemetry activated event handler (sends agent ID and provider back to UI)
         def make_activation_handler(a_id=agent_id, a_prov=provider):
             async def on_activated(agent, args):
                 logger.info(f"Agent '{a_id}' ({a_prov}) activated.")
                 if webrtc_connection:
-                    await webrtc_connection.send_app_message({
+                    webrtc_connection.send_app_message({
                         "type": "active_agent",
                         "name": a_id,
                         "provider": a_prov
@@ -177,7 +177,7 @@ async def run_voice_pipeline(transport: Any, webrtc_connection: Any = None) -> N
         logger.info(f"Client connected: {client}")
         # Notify UI of initial active agent
         if webrtc_connection:
-            await webrtc_connection.send_app_message({"type": "active_agent", "name": "router"})
+            webrtc_connection.send_app_message({"type": "active_agent", "name": "router"})
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
