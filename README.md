@@ -57,6 +57,22 @@ preet-voicebot-platform/
 └── web/                       # Vite + Voice UI Kit frontend (later milestone)
 ```
 
+## Quick start
+
+1. **Configure API Keys**: Open `server/.env` and add your vendor credentials:
+   ```dotenv
+   SONIOX_API_KEY=your_soniox_key
+   CARTESIA_API_KEY=your_cartesia_key
+   GOOGLE_API_KEY=your_gemini_key
+   ```
+2. **Start Both Servers**: Run the unified concurrent launcher command:
+   ```bash
+   ./run.sh
+   ```
+3. **Open Console**: Open your browser at `http://localhost:5173` to test the real-time multilingual voice assistant.
+
 ## Status
 
-📋 **Phase: Planning / Documentation.** Code scaffolding begins at milestone **M1** — see [Roadmap](docs/07-ROADMAP.md).
+📋 **Milestone M1 Completed.** The core single-agent voice pipeline, FastAPI backend, and React dashboard console are fully scaffolded and operational.
+- We are currently designing and implementing **Milestone M2 — Multi-Agent Handoff**.
+- For active work checklists and file details, see the live [TRACKER.md](TRACKER.md).
