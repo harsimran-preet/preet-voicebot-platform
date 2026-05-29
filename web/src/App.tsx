@@ -18,7 +18,9 @@ import {
   AlertCircle, 
   Globe, 
   Flame,
-  Radio
+  Radio,
+  UserCheck,
+  ShieldCheck
 } from "lucide-react";
 
 // Initialize Pipecat Client with the SmallWebRTCTransport pointing to our FastAPI server proxy
@@ -40,6 +42,7 @@ function App() {
   const [userIsSpeaking, setUserIsSpeaking] = useState<boolean>(false);
   const [botIsSpeaking, setBotIsSpeaking] = useState<boolean>(false);
   const [detectedLanguage, setDetectedLanguage] = useState<string>("en");
+  const [activeAgent, setActiveAgent] = useState<string>("router");
   
   // Real-time latency tracking
   const [voiceToVoice, setVoiceToVoice] = useState<number>(0);
@@ -105,10 +108,27 @@ function App() {
         setSttLatency(150 + Math.floor(Math.random() * 50));
       }
       
-      // If language tag is included, update detected language
       if (transcript.language) {
         setDetectedLanguage(transcript.language);
       }
+    };
+
+    // 4. Listen for active agent updates from the subagent runner
+    const handleServerMessage = (message: any) => {
+      if (message && message.type === "active_agent") {
+        logger.info("Active agent transitioned to:", message.name);
+        setActiveAgent(message.name);
+        // Automatically swap the UI model display based on the active agent
+        if (message.name === "router") {
+          setActiveLlm("gemini");
+        } else if (message.name === "support") {
+          setActiveLlm("openai");
+        }
+      }
+    };
+
+    const logger = {
+      info: (...args: any[]) => console.log("[UI]", ...args)
     };
 
     // Listen to events on client
@@ -119,6 +139,7 @@ function App() {
     pipecatClient.on(RTVIEvent.BotLlmStarted, handleLlmStarted);
     pipecatClient.on(RTVIEvent.BotTtsStarted, handleTtsStarted);
     pipecatClient.on(RTVIEvent.UserTranscript, handleUserTranscript);
+    pipecatClient.on(RTVIEvent.ServerMessage, handleServerMessage);
 
     return () => {
       pipecatClient.off(RTVIEvent.UserStartedSpeaking, handleUserStartSpeaking);
@@ -128,6 +149,7 @@ function App() {
       pipecatClient.off(RTVIEvent.BotLlmStarted, handleLlmStarted);
       pipecatClient.off(RTVIEvent.BotTtsStarted, handleTtsStarted);
       pipecatClient.off(RTVIEvent.UserTranscript, handleUserTranscript);
+      pipecatClient.off(RTVIEvent.ServerMessage, handleServerMessage);
     };
   }, [pipecatClient]);
 
@@ -151,6 +173,7 @@ function App() {
       setSttLatency(0);
       setLlmLatency(0);
       setTtsLatency(0);
+      setActiveAgent("router");
     }
   };
 
@@ -233,9 +256,9 @@ function App() {
           </div>
           <div>
             <h1 className="text-xl font-bold font-['Outfit'] tracking-tight text-white flex items-center gap-1.5">
-              PREET <span className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full font-sans">M1</span>
+              PREET <span className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full font-sans">M2</span>
             </h1>
-            <p className="text-xs text-slate-500 font-mono">VOICEBOT OBSERVABILITY CONSOLE</p>
+            <p className="text-xs text-slate-500 font-mono">MULTI-AGENT VOICE PLATFORM</p>
           </div>
         </div>
 
@@ -261,7 +284,7 @@ function App() {
                 <Globe className="w-3.5 h-3.5" /> Language ID: <span className="text-indigo-400 font-bold">{detectedLanguage.toUpperCase()}</span>
               </span>
               <span className="text-xs font-mono text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5" /> LLM: <span className="text-indigo-400 font-bold">{activeLlm.toUpperCase()}</span>
+                <Cpu className="w-3.5 h-3.5" /> Model: <span className="text-indigo-400 font-bold">{activeLlm.toUpperCase()}</span>
               </span>
             </div>
 
@@ -315,7 +338,7 @@ function App() {
               )}
               {!isCallActive && transportState !== "connecting" && (
                 <p className="text-xs text-slate-500 font-medium">
-                  Connect your microphone to hold a real-time multilingual voice conversation.
+                  Connect your microphone to hold a real-time voice conversation with our AI specialists.
                 </p>
               )}
             </div>
@@ -409,12 +432,22 @@ function App() {
         <section className="lg:col-span-7 glass-panel rounded-3xl p-6 flex flex-col h-[640px] items-stretch">
           <div className="flex items-center justify-between mb-4 border-b border-slate-800/40 pb-3">
             <h2 className="text-sm font-mono text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Activity className="w-4 h-4 text-emerald-400 animate-pulse" /> Live Telemetry Transcript
+              <Activity className="w-4 h-4 text-emerald-400 animate-pulse" /> Live Multi-Agent Telemetry
             </h2>
+            
+            {/* Active Subagent Badge Indicator */}
             {isCallActive && (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 font-mono text-[10px] font-bold tracking-wider animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> LIVE STREAMING
-              </span>
+              <div className="flex items-center gap-2">
+                {activeAgent === "router" ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.25)]">
+                    <UserCheck className="w-3.5 h-3.5" /> ROUTER ACTIVE
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono text-[10px] font-bold tracking-wider shadow-[0_0_8px_rgba(99,102,241,0.25)] animate-pulse">
+                    <ShieldCheck className="w-3.5 h-3.5" /> SUPPORT SPECIALIST ACTIVE
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -427,7 +460,7 @@ function App() {
                 <Volume2 className="w-12 h-12 text-slate-700 mb-3 animate-pulse" />
                 <h3 className="text-slate-400 font-medium mb-1">Telemetry stream is empty</h3>
                 <p className="text-xs text-slate-600 max-w-sm">
-                  Once connected, a real-time speech and response log will stream here in real time.
+                  Once connected, the central Router (Gemini) will greet you. Ask for Support to witness a live turn handoff to OpenAI.
                 </p>
               </div>
             )}
@@ -471,7 +504,9 @@ function App() {
 
             {botIsSpeaking && chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === "user" && (
               <div className="self-start max-w-[80%] flex flex-col items-start">
-                <span className="text-[10px] font-mono text-slate-600 mb-1">ASSISTANT • RESPONDING</span>
+                <span className="text-[10px] font-mono text-slate-600 mb-1">
+                  {activeAgent.toUpperCase()} • RESPONDING
+                </span>
                 <div className="px-4 py-3 rounded-2xl rounded-tl-none bg-indigo-950/20 border border-indigo-900/30 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-indigo-400 typing-dot" />
                   <span className="w-2 h-2 rounded-full bg-indigo-400 typing-dot" />
@@ -496,6 +531,10 @@ function App() {
         </div>
         <div className="flex items-center gap-2">
           <span>STT: SONIOX</span>
+          <span>•</span>
+          <span>ROUTER: GEMINI</span>
+          <span>•</span>
+          <span>SUPPORT: OPENAI</span>
           <span>•</span>
           <span>TTS: CARTESIA</span>
         </div>

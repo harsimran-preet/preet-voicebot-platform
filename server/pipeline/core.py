@@ -1,36 +1,35 @@
 import os
 import logging
+import asyncio
 from typing import Any
 
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.task import PipelineTask
 from pipecat.pipeline.runner import PipelineRunner
-from pipecat.processors.aggregators.llm_context import LLMContext, LLMContextMessage
-from pipecat.processors.aggregators.llm_response_universal import (
-    LLMUserAggregator,
-    LLMAssistantAggregator,
-)
 
 # Import services
 from pipecat.services.soniox.stt import SonioxSTTService, SonioxSTTSettings
 from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport, TransportParams
 
-# Import LLM adapter
-from server.pipeline.llm_adapter import get_llm_service
+# Import subagent elements
+from pipecat_subagents.bus import AsyncQueueBus, BusBridgeProcessor
+from pipecat_subagents.runner import AgentRunner
+from server.agents.router import RouterAgent
+from server.agents.support import SupportAgent
 
 logger = logging.getLogger("pipecat")
 
 async def run_voice_pipeline(webrtc_connection: Any) -> None:
     """
-    Runs the voice pipeline for a given WebRTC connection.
-    This sets up:
+    Runs the multi-agent voice pipeline for a given WebRTC connection.
+    Sets up:
       1. WebRTC transport (inbound/outbound audio)
       2. Soniox multilingual STT
-      3. Pluggable OpenAI/Gemini LLM
+      3. Pluggable subagents (Gemini Router & OpenAI Support) linked via in-memory AsyncQueueBus
       4. Cartesia high-fidelity TTS
     """
-    logger.info("Initializing Pipecat Voice Pipeline...")
+    logger.info("Initializing Pipecat Multi-Agent Voice Pipeline...")
 
     # 1. Transport Parameters & Transport
     transport_params = TransportParams(
@@ -62,7 +61,6 @@ async def run_voice_pipeline(webrtc_connection: Any) -> None:
     if not cartesia_key:
         raise ValueError("CARTESIA_API_KEY environment variable is not set")
     
-    # a0e9987c-abaf-4752-bd35-40671e7955ee is a high-quality friendly female voice (Barbra)
     cartesia_voice = os.getenv("CARTESIA_VOICE_ID", "a0e9987c-abaf-4752-bd35-40671e7955ee")
     tts = CartesiaTTSService(
         api_key=cartesia_key,
@@ -70,65 +68,67 @@ async def run_voice_pipeline(webrtc_connection: Any) -> None:
         model="sonic-english"
     )
 
-    # 4. Pluggable LLM Adapter
-    system_instruction = (
-        "You are a friendly, helpful AI voice assistant for Preet Voicebot Platform.\n"
-        "You understand over 60 languages. Always reply in the same language the caller speaks in.\n"
-        "Keep your answers very brief and conversational (1-2 sentences at most).\n"
-        "Avoid bullet points, lists, or markdown formatting, as you are speaking out loud.\n"
-        "If the caller is silent or greets you, greet them warmly and ask how you can help."
-    )
-    
-    # Instantiate the LLM service dynamically based on the .env config
-    provider = os.getenv("ROUTER_LLM", "gemini")
-    logger.info(f"Using selectable LLM provider: {provider}")
-    llm = get_llm_service(
-        provider=provider,
-        system_instruction=system_instruction
-    )
+    # 4. Multi-Agent Bus and Bridge Processor
+    # In-memory async queue bus for fast, local inter-agent turn handoffs
+    bus = AsyncQueueBus()
+    bridge = BusBridgeProcessor(bus=bus, agent_name="main")
 
-    # 5. LLM User and Assistant Context Aggregators
-    # Standard conversation context starting with system instructions
-    messages = [
-        LLMContextMessage(role="system", content=system_instruction)
-    ]
-    context = LLMContext(messages=messages)
-    
-    user_aggregator = LLMUserAggregator(context)
-    assistant_aggregator = LLMAssistantAggregator(context)
-
-    # 6. Pipeline Assembly
-    # Flow: Audio In -> STT -> Aggregator -> LLM -> TTS -> Audio Out -> Aggregator (Assistant)
+    # 5. Core Pipeline Assembly (Drop-in Bridge replaces single LLM)
     pipeline = Pipeline([
         transport.input(),
         stt,
-        user_aggregator,
-        llm,
+        bridge,
         tts,
-        transport.output(),
-        assistant_aggregator
+        transport.output()
     ])
 
-    # 7. Pipeline Runner & Task execution
     task = PipelineTask(pipeline)
-    runner = PipelineRunner()
+    pipeline_runner = PipelineRunner()
 
-    # Register basic transport events for logging
+    # 6. Instantiate Subagents and AgentRunner
+    runner = AgentRunner(bus=bus, handle_sigint=False)
+    
+    # Router starts active, Support starts idle
+    router = RouterAgent("router", bus=bus, active=True)
+    support = SupportAgent("support", bus=bus, active=False)
+    
+    runner.add_agent(router)
+    runner.add_agent(support)
+
+    # 7. Coordinate Active Agent Telemetry
+    # When an agent activates, notify the React browser client instantly
+    @router.event_handler("on_activated")
+    async def on_router_active(agent, args):
+        logger.info("Router Agent activated.")
+        await webrtc_connection.send_app_message({"type": "active_agent", "name": "router"})
+
+    @support.event_handler("on_activated")
+    async def on_support_active(agent, args):
+        logger.info("Support Agent activated.")
+        await webrtc_connection.send_app_message({"type": "active_agent", "name": "support"})
+
+    # 8. Setup Transport Connection/Disconnection Events
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client):
         logger.info(f"WebRTC client connected: {client}")
-        # Automatically greet the user upon connection
-        await task.queue_frames([LLMContextMessage(role="user", content="Hello!").to_frame()])
+        # Notify UI of initial active agent
+        await webrtc_connection.send_app_message({"type": "active_agent", "name": "router"})
 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
         logger.info(f"WebRTC client disconnected: {client}")
+        # Tear down both loops cleanly
         await task.cancel()
+        await runner.end()
 
+    # 9. Concurrently run both the main transport pipeline and subagent runners
     try:
-        logger.info("Starting Pipecat pipeline runner...")
-        await runner.run(task)
+        logger.info("Running pipeline and subagent loops concurrently...")
+        await asyncio.gather(
+            pipeline_runner.run(task),
+            runner.run()
+        )
     except Exception as e:
-        logger.error(f"Error in running Pipecat pipeline: {e}", exc_info=True)
+        logger.error(f"Error in multi-agent pipeline execution: {e}", exc_info=True)
     finally:
-        logger.info("Voice pipeline finished and cleaned up.")
+        logger.info("Multi-agent voice pipeline finished and cleaned up.")
