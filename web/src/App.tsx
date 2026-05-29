@@ -20,7 +20,10 @@ import {
   Flame,
   Radio,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  Trash2,
+  Wrench,
+  Sparkles
 } from "lucide-react";
 
 // Initialize Pipecat Client with the SmallWebRTCTransport pointing to our FastAPI server proxy
@@ -54,9 +57,119 @@ function App() {
   const userStoppedTimeRef = useRef<number | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
+  // Dynamic Agent Builder States
+  const [agents, setAgents] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("console");
+  
+  // Agent Builder Form State
+  const [newAgentId, setNewAgentId] = useState<string>("");
+  const [newAgentName, setNewAgentName] = useState<string>("");
+  const [newAgentPrompt, setNewAgentPrompt] = useState<string>("");
+  const [newAgentProvider, setNewAgentProvider] = useState<string>("openai");
+  const [newAgentActiveOnStart, setNewAgentActiveOnStart] = useState<boolean>(false);
+  const [newAgentHandoffTarget, setNewAgentHandoffTarget] = useState<string>("");
+  const [formError, setFormError] = useState<string>("");
+  const [formSuccess, setFormSuccess] = useState<string>("");
+
+  const fetchAgents = () => {
+    fetch("/api/agents")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setAgents(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching agents:", err));
+  };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  const handleSaveAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    setFormSuccess("");
+
+    if (!newAgentId.trim() || !newAgentName.trim() || !newAgentPrompt.trim()) {
+      setFormError("All fields are required.");
+      return;
+    }
+
+    if (!/^[a-z0-9_]+$/.test(newAgentId)) {
+      setFormError("Agent ID must be lowercase alphanumeric and underscores only.");
+      return;
+    }
+
+    // Build the dynamic tools configuration
+    const tools = [];
+    if (newAgentHandoffTarget) {
+      tools.push({
+        name: `handoff_to_${newAgentHandoffTarget}`,
+        description: `Handoff conversation control to the ${newAgentHandoffTarget} specialist.`,
+        target_agent: newAgentHandoffTarget,
+      });
+    }
+
+    const payload = {
+      id: newAgentId,
+      name: newAgentName,
+      prompt: newAgentPrompt,
+      llm_provider: newAgentProvider,
+      active_on_start: newAgentActiveOnStart,
+      tools: tools,
+    };
+
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || "Failed to save agent");
+      }
+
+      setFormSuccess(`Agent '${newAgentId}' saved successfully!`);
+      setNewAgentId("");
+      setNewAgentName("");
+      setNewAgentPrompt("");
+      setNewAgentProvider("openai");
+      setNewAgentActiveOnStart(false);
+      setNewAgentHandoffTarget("");
+      fetchAgents();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to save agent.");
+    }
+  };
+
+  const handleDeleteAgent = async (agentId: string) => {
+    if (agentId === "router") return;
+    if (!confirm(`Are you sure you want to delete the agent '${agentId}'?`)) return;
+
+    try {
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || "Failed to delete agent");
+      }
+
+      fetchAgents();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete agent.");
+    }
+  };
+
   // Fetch active LLM config and health on load
   useEffect(() => {
-    fetch("/health")
+    fetch("/api/health")
       .then((res) => res.json())
       .then((data) => {
         if (data.router_llm) {
@@ -118,11 +231,15 @@ function App() {
       if (message && message.type === "active_agent") {
         logger.info("Active agent transitioned to:", message.name);
         setActiveAgent(message.name);
-        // Automatically swap the UI model display based on the active agent
-        if (message.name === "router") {
-          setActiveLlm("gemini");
-        } else if (message.name === "support") {
-          setActiveLlm("openai");
+        if (message.provider) {
+          setActiveLlm(message.provider);
+        } else {
+          // Automatically swap the UI model display based on the active agent (fallback)
+          if (message.name === "router") {
+            setActiveLlm("gemini");
+          } else if (message.name === "support") {
+            setActiveLlm("openai");
+          }
         }
       }
     };
@@ -249,30 +366,56 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header bar */}
-      <header className="flex items-center justify-between mb-8 pb-4 border-b border-slate-800/60">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-slate-800/60 gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center glow-primary">
             <Radio className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div>
             <h1 className="text-xl font-bold font-['Outfit'] tracking-tight text-white flex items-center gap-1.5">
-              PREET <span className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full font-sans">M2</span>
+              PREET <span className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full font-sans">AGENT BUILDER</span>
             </h1>
-            <p className="text-xs text-slate-500 font-mono">MULTI-AGENT VOICE PLATFORM</p>
+            <p className="text-xs text-slate-500 font-mono">DYNAMIC MULTI-AGENT ENGINE</p>
           </div>
         </div>
 
-        {/* Global status badge */}
-        <div className={`flex items-center gap-3 px-4 py-2 rounded-xl glass-panel border ${statusConfig.borderColor}`}>
-          <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dotColor}`} />
-          <span className={`text-xs font-mono font-bold tracking-wider ${statusConfig.textColor}`}>
-            {statusConfig.label}
-          </span>
+        {/* Tabs and status */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex rounded-xl bg-slate-900 border border-slate-850 p-1">
+            <button
+              onClick={() => setActiveTab("console")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wider cursor-pointer transition-all duration-205
+                ${activeTab === "console" 
+                  ? "bg-indigo-600 text-white shadow-sm glow-primary" 
+                  : "text-slate-500 hover:text-slate-300"
+                }`}
+            >
+              OPERATOR CONSOLE
+            </button>
+            <button
+              onClick={() => setActiveTab("builder")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wider cursor-pointer transition-all duration-205
+                ${activeTab === "builder" 
+                  ? "bg-indigo-600 text-white shadow-sm glow-primary" 
+                  : "text-slate-500 hover:text-slate-300"
+                }`}
+            >
+              AGENT BUILDER
+            </button>
+          </div>
+
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-xl glass-panel border ${statusConfig.borderColor}`}>
+            <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.dotColor}`} />
+            <span className={`text-xs font-mono font-bold tracking-wider ${statusConfig.textColor}`}>
+              {statusConfig.label}
+            </span>
+          </div>
         </div>
       </header>
 
-      {/* Main dashboard grid */}
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
+      {/* Console Tab */}
+      {activeTab === "console" && (
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
         
         {/* Left Side: Telemetry / Control Panel */}
         <section className="lg:col-span-5 flex flex-col gap-6">
@@ -438,15 +581,15 @@ function App() {
             {/* Active Subagent Badge Indicator */}
             {isCallActive && (
               <div className="flex items-center gap-2">
-                {activeAgent === "router" ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.25)]">
-                    <UserCheck className="w-3.5 h-3.5" /> ROUTER ACTIVE
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono text-[10px] font-bold tracking-wider shadow-[0_0_8px_rgba(99,102,241,0.25)] animate-pulse">
-                    <ShieldCheck className="w-3.5 h-3.5" /> SUPPORT SPECIALIST ACTIVE
-                  </span>
-                )}
+                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-[10px] font-bold tracking-wider shadow-sm
+                  ${activeAgent === "router" 
+                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.25)]" 
+                    : "bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.25)] animate-pulse"
+                  }`}
+                >
+                  {activeAgent === "router" ? <UserCheck className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                  {activeAgent.toUpperCase()} ACTIVE
+                </span>
               </div>
             )}
           </div>
@@ -522,7 +665,183 @@ function App() {
           <PipecatClientAudio />
         </section>
 
-      </main>
+        </main>
+      )}
+
+      {/* Builder Tab */}
+      {activeTab === "builder" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
+          {/* Left panel: Form to Create/Edit Custom Agents */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="glass-panel rounded-3xl p-6 flex flex-col justify-between flex-1 min-h-[500px]">
+              <div>
+                <h2 className="text-sm font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-800/40 pb-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400" /> Create Custom Agent
+                </h2>
+
+                <form onSubmit={handleSaveAgent} className="flex flex-col gap-4">
+                  {formError && (
+                    <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-xl flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{formError}</span>
+                    </div>
+                  )}
+
+                  {formSuccess && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs rounded-xl flex items-center gap-2">
+                      <UserCheck className="w-4 h-4 flex-shrink-0" />
+                      <span>{formSuccess}</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-mono text-slate-400 uppercase tracking-wider">Agent ID (lowercase alphanumeric)</label>
+                    <input
+                      type="text"
+                      value={newAgentId}
+                      onChange={(e) => setNewAgentId(e.target.value.toLowerCase())}
+                      placeholder="e.g. sales, billing"
+                      className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none transition-all duration-205 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-mono text-slate-400 uppercase tracking-wider">Agent Name</label>
+                    <input
+                      type="text"
+                      value={newAgentName}
+                      onChange={(e) => setNewAgentName(e.target.value)}
+                      placeholder="e.g. Sales Specialist"
+                      className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none transition-all duration-205 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-mono text-slate-400 uppercase tracking-wider">LLM Provider</label>
+                      <select
+                        value={newAgentProvider}
+                        onChange={(e) => setNewAgentProvider(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none transition-all duration-205 cursor-pointer focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <option value="gemini">Google Gemini (Flash)</option>
+                        <option value="openai">OpenAI (GPT)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-mono text-slate-400 uppercase tracking-wider">Handoff Target</label>
+                      <select
+                        value={newAgentHandoffTarget}
+                        onChange={(e) => setNewAgentHandoffTarget(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none transition-all duration-205 cursor-pointer focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <option value="">None (Standalone)</option>
+                        {agents.map((a) => (
+                          <option key={a.id} value={a.id}>{a.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      id="activeOnStart"
+                      checked={newAgentActiveOnStart}
+                      onChange={(e) => setNewAgentActiveOnStart(e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 bg-slate-900 border-slate-800 rounded focus:ring-indigo-500 cursor-pointer"
+                    />
+                    <label htmlFor="activeOnStart" className="text-xs font-mono text-slate-400 uppercase tracking-wider cursor-pointer select-none">
+                      Activate at connection start
+                    </label>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>System Instructions / Prompt</span>
+                      <span className="text-[10px] text-slate-500 lowercase normal-case">(keep under 1-2 turns, speakable only)</span>
+                    </label>
+                    <textarea
+                      value={newAgentPrompt}
+                      onChange={(e) => setNewAgentPrompt(e.target.value)}
+                      placeholder="e.g. You are the Billing Specialist. Speak concisely without bullet points..."
+                      rows={5}
+                      className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none transition-all duration-205 font-sans resize-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 glow-primary text-white text-xs font-mono font-bold tracking-wider transition-all duration-250 cursor-pointer border-none outline-none"
+                  >
+                    SAVE AND DEPLOY AGENT
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {/* Right panel: configured agents grid */}
+          <div className="lg:col-span-7 glass-panel rounded-3xl p-6 flex flex-col h-[640px] items-stretch overflow-hidden">
+            <h2 className="text-sm font-mono text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-800/40 pb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400 animate-pulse" /> Active Fleet Registry ({agents.length})
+            </h2>
+
+            <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-4">
+              {agents.map((agent) => (
+                <div key={agent.id} className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/60 flex flex-col justify-between gap-4 hover:border-slate-700/60 transition-all duration-200">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white font-['Outfit'] tracking-wide flex items-center gap-2">
+                        {agent.name}
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          {agent.id}
+                        </span>
+                        {agent.active_on_start && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            start active
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-[10px] font-mono text-slate-500 mt-1 uppercase">
+                        Vendor: <span className="text-indigo-400 font-bold">{agent.llm_provider.toUpperCase()}</span>
+                      </p>
+                    </div>
+
+                    {agent.id !== "router" && (
+                      <button
+                        onClick={() => handleDeleteAgent(agent.id)}
+                        className="p-2 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer transition-all duration-200 border-none bg-transparent"
+                        title="Delete custom agent"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-slate-400 leading-relaxed bg-slate-950/40 p-3.5 rounded-xl border border-slate-900/40 max-h-24 overflow-y-auto font-sans">
+                    <strong>Prompt:</strong> {agent.prompt}
+                  </div>
+
+                  {agent.tools && agent.tools.length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Wrench className="w-3 h-3" /> Handoff Capabilities:
+                      </span>
+                      {agent.tools.map((t: any, idx: number) => (
+                        <span key={idx} className="text-[10px] font-mono font-bold bg-slate-800 text-indigo-400 border border-slate-750 px-2.5 py-0.5 rounded-full" title={t.description}>
+                          {t.name} ➔ {t.target_agent}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer copyright */}
       <footer className="mt-8 pt-4 border-t border-slate-900 flex items-center justify-between text-[10px] font-mono text-slate-600">

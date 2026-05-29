@@ -3,6 +3,8 @@ server/.venv/
 server/__pycache__/
 server/pipeline/__pycache__/
 server/server.log
+server.log
+*.log
 server/.env
 server/.env.local
 *.pyc

@@ -44,13 +44,13 @@ This document maintains the active context of work, tracking implemented feature
 
 ### Milestone M3 — Telephony (Plivo) Inbound
 * **Goal**: Connect phone lines to the multi-agent voicebot fleet.
-* **Status**: 🟡 **IN PROGRESS**
+* **Status**: 🟢 **COMPLETED** (2026-05-29)
 * **Active Tasks**:
-  - [ ] Implement `PlivoFrameSerializer` + `WebSocketServerTransport` for 8 kHz μ-law audio stream.
-  - [ ] Setup `/answer` XML endpoint serving bidirectional streaming payload.
-  - [ ] Setup `/ws` WebSocket pipeline handler for incoming phone media streams.
-  - [ ] Verify DTMF digit collection as input pipeline events.
-  - [ ] Verify auto call termination (`auto_hang_up`) upon pipeline end.
+  - [x] Implement `PlivoFrameSerializer` + `FastAPIWebsocketTransport` for 8 kHz μ-law audio stream.
+  - [x] Setup `/answer` XML endpoint serving bidirectional streaming payload.
+  - [x] Setup `/ws` WebSocket pipeline handler for incoming phone media streams.
+  - [x] Verify DTMF digit collection as input pipeline events.
+  - [x] Verify auto call termination (`auto_hang_up`) upon pipeline end.
 
 ### Milestone M4 — Specialists + Flows + Outbound
 * **Goal**: Add Sales, Billing, and structured Pipecat Flows for verification.
