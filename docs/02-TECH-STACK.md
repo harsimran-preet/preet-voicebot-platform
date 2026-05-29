@@ -9,8 +9,7 @@
 | Package | Version | Purpose |
 |---|---|---|
 | `pipecat-ai` | **1.3.0** | Core voice/multimodal pipeline framework |
-| `pipecat-ai[soniox]` | (extra) | Soniox STT integration |
-| `pipecat-ai[cartesia]` | (extra) | Cartesia TTS |
+| `pipecat-ai[soniox]` | (extra) | Soniox STT & TTS integration |
 | `pipecat-ai[openai]` | (extra) | OpenAI LLM (`OpenAILLMService`) |
 | `pipecat-ai[google]` | (extra) | Google Gemini LLM (`GoogleLLMService`) |
 | `pipecat-ai[silero]` | (extra) | Silero VAD for turn detection |
@@ -25,7 +24,7 @@
 
 ```bash
 # recommended
-uv add "pipecat-ai[soniox,cartesia,openai,google,silero,webrtc]==1.3.0"
+uv add "pipecat-ai[soniox,openai,google,silero,webrtc]==1.3.0"
 uv add pipecat-ai-flows pipecat-ai-subagents plivo fastapi uvicorn python-dotenv
 ```
 
@@ -64,10 +63,9 @@ npm i @fontsource-variable/geist @fontsource-variable/geist-mono
 | Service | Role | Auth env var |
 |---|---|---|
 | **Plivo** | Telephony (PSTN, audio streaming) | `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN` |
-| **Soniox** | Multilingual STT (`stt-rt-v4`) | `SONIOX_API_KEY` |
+| **Soniox** | Multilingual STT & TTS | `SONIOX_API_KEY` |
 | **OpenAI** | LLM reasoning (specialists) | `OPENAI_API_KEY` |
 | **Google Gemini** | LLM reasoning (router + multilingual) | `GOOGLE_API_KEY` |
-| **Cartesia** | TTS (default) | `CARTESIA_API_KEY` |
 | **ngrok** (dev only) | Public tunnel for Plivo webhooks | — |
 
 ---
@@ -103,9 +101,6 @@ GOOGLE_API_KEY=
 # default provider per role
 ROUTER_LLM=gemini          # gemini | openai
 SPECIALIST_LLM=openai      # openai | gemini
-
-# TTS
-CARTESIA_API_KEY=
 
 # Server
 PUBLIC_BASE_URL=https://your-ngrok-url.ngrok.io

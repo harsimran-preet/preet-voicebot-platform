@@ -18,7 +18,7 @@
                           │                            │                    │
                           │            ┌───────────────┼───────────────┐    │
                           │            ▼               ▼               ▼    │
-                          │         Soniox          LLM (OpenAI +      Cartesia│
+                          │         Soniox          LLM (OpenAI +      Soniox│
                           │         STT             Gemini)           TTS    │
                           │                            │                    │
                           │                 ┌──────────┴──────────┐         │
@@ -66,7 +66,7 @@ Both feed the same **STT → Agents → TTS** core.
 ### 2.4 Speech output layer
 | Component | Responsibility |
 |---|---|
-| **Cartesia TTS** (default) | Low-latency streamed speech synthesis |
+| **Soniox TTS** (default) | Low-latency streamed speech synthesis |
 | TTS adapter | Provider abstraction for swapping vendors |
 
 ### 2.5 Experience layer
@@ -85,7 +85,7 @@ Both feed the same **STT → Agents → TTS** core.
 ## 3. Inbound call sequence (telephony)
 
 ```
-Caller       Plivo            FastAPI /answer      WS /ws (Pipecat)        Soniox   LLM/Agents   Cartesia
+Caller       Plivo            FastAPI /answer      WS /ws (Pipecat)        Soniox   LLM/Agents   Soniox TTS
   │  dial ───▶ │                    │                    │                   │         │            │
   │            │ ── GET /answer ───▶│                    │                   │         │            │
   │            │ ◀── XML <Stream> ──│                    │                   │         │            │
@@ -139,7 +139,7 @@ Detail in [03-MULTI-AGENT-DESIGN.md](03-MULTI-AGENT-DESIGN.md).
             │   Web console: static build on CDN / S3       │
             └─────────────────────────────────────────────┘
                        │            │            │
-                    Soniox        LLM API     Cartesia
+                    Soniox        LLM API     Soniox TTS
 ```
 
 - **Session affinity:** each call = one long-lived WS/WebRTC session pinned to a worker.

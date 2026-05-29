@@ -126,7 +126,7 @@ A platform that cleanly separates four concerns and makes each best-in-class:
 | Network / Plivo stream | ~100 ms |
 | STT finalization (Soniox + VAD) | ~150–300 ms |
 | Router + LLM first token | ~200–400 ms |
-| TTS first byte (Cartesia) | ~150–250 ms |
+| TTS first byte (Soniox) | ~150–250 ms |
 | **Total p50 target** | **≤ 800 ms** |
 
 See [08-NFR-SECURITY-COMPLIANCE.md](08-NFR-SECURITY-COMPLIANCE.md) for the full budget and mitigations.
@@ -137,7 +137,7 @@ See [08-NFR-SECURITY-COMPLIANCE.md](08-NFR-SECURITY-COMPLIANCE.md) for the full 
 
 - Plivo account with a voice-enabled number and Audio Streaming enabled.
 - Soniox API key (`SONIOX_API_KEY`).
-- LLM provider keys for **both OpenAI (`OPENAI_API_KEY`) and Gemini (`GOOGLE_API_KEY`)**, and a TTS key (Cartesia).
+- LLM provider keys for **both OpenAI (`OPENAI_API_KEY`) and Gemini (`GOOGLE_API_KEY`)**, and the **Soniox API key (`SONIOX_API_KEY`)** for both speech-to-text and text-to-speech.
 - Public HTTPS/WSS endpoint (ngrok in dev; cloud + TLS in prod).
 - Python ≥ 3.12 runtime; Node ≥ 20 for the web app.
 
@@ -156,7 +156,7 @@ See [08-NFR-SECURITY-COMPLIANCE.md](08-NFR-SECURITY-COMPLIANCE.md) for the full 
 - Default model per role — proposed: **Gemini (Flash-class)** for the router, **OpenAI** for specialists. Confirm exact model IDs and cost/latency tradeoff via eval.
 - Do we need persistent call recordings/transcripts storage in v1 (compliance)?
 - Outbound call compliance (consent, DND lists) — in scope for v1?
-- Soniox TTS: confirm availability; otherwise Cartesia remains default TTS.
+- [x] Soniox TTS has been confirmed and fully implemented as the default TTS vendor, allowing both STT and TTS to run on a single Soniox API key.
 
 ---
 

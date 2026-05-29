@@ -77,7 +77,7 @@ stt = SonioxSTTService(
         enable_language_identification=True,
         context=SonioxContextObject(
             general=[SonioxContextGeneralItem(key="domain", value="telecom-support")],
-            terms=["preet-voicebot", "Plivo", "Cartesia", "refund", "DTMF"],
+            terms=["preet-voicebot", "Plivo", "Soniox", "refund", "DTMF"],
         ),
     ),
 )
@@ -115,9 +115,9 @@ Every agent responds in `{{language}}`; handoffs carry the language so it stays 
 
 ---
 
-## 9. TTS note
+## 9. Soniox TTS Integration
 
-Soniox advertises a TTS offering, but the Pipecat STT docs we verified cover **STT only**. **v1 default TTS = Cartesia.** Revisit Soniox TTS (single-vendor STT+TTS, one API key) as a fast-follow once its Pipecat support is confirmed. Tracked as an open question in the [PRD §10](00-PRD.md).
+We have successfully migrated the speech synthesis (TTS) to **Soniox TTS** using the `pipecat.services.soniox.tts.SonioxTTSService` class. This achieves a **single-vendor STT+TTS architecture** that runs entirely off a single `SONIOX_API_KEY`, simplifying credential management and reducing vendor diversity while maintaining low-latency, high-fidelity multilingual voice outputs.
 
 ---
 

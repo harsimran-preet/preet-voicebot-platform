@@ -25,7 +25,7 @@ async def run_voice_pipeline(transport: Any, webrtc_connection: Any = None) -> N
     Sets up:
       1. Soniox multilingual STT
       2. Pluggable subagents (Gemini Router & OpenAI Support) linked via in-memory AsyncQueueBus
-      3. Cartesia high-fidelity TTS
+      3. Soniox multilingual TTS
     """
     logger.info("Initializing Pipecat Multi-Agent Voice Pipeline...")
 

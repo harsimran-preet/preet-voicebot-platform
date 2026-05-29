@@ -18,7 +18,7 @@ Milestones are vertical slices — each ends in something runnable and demoable.
 **Goal:** Prove the core pipeline over WebRTC with the Voice UI Kit.
 - [x] Scaffold `server/` (FastAPI + Pipecat 1.3.0) and `web/` (Vite + Voice UI Kit).
 - [x] `SmallWebRTCTransport` + `/api/offer`.
-- [x] Soniox STT → LLM → Cartesia TTS, single hardcoded prompt.
+- [x] Soniox STT → LLM → Soniox TTS, single hardcoded prompt.
 - [x] **LLM adapter** wrapping `OpenAILLMService` + `GoogleLLMService` (env-selectable provider).
 - [x] `ConsoleTemplate` connects and you can talk to the bot in the browser.
 **Exit:** Browser conversation works; transcript + latency visible in console.
@@ -39,12 +39,12 @@ Milestones are vertical slices — each ends in something runnable and demoable.
 
 ---
 
-## M3 — Telephony (Plivo) inbound
+## M3 — Telephony (Plivo) inbound ✅
 **Goal:** Same bot reachable by phone.
-- [ ] `WebSocketServerTransport` + `PlivoFrameSerializer` + `/answer` XML + `/ws`.
-- [ ] Plivo number, app, Audio Streaming; ngrok dev loop.
-- [ ] DTMF handling; `auto_hang_up`.
-- [ ] 8 kHz μ-law path verified end-to-end.
+- [x] `WebSocketServerTransport` + `PlivoFrameSerializer` + `/answer` XML + `/ws`.
+- [x] Plivo number, app, Audio Streaming; ngrok dev loop.
+- [x] DTMF handling; `auto_hang_up`.
+- [x] 8 kHz μ-law path verified end-to-end.
 **Exit:** Call the number, talk to the multi-agent bot, clean hang-up.
 **Demo:** Live phone call routed through router + specialist.
 

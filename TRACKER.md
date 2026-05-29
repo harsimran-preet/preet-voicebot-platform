@@ -26,7 +26,7 @@ This document maintains the active context of work, tracking implemented feature
 * **Deliverables**:
   - Python FastAPI app running Pipecat 1.3.0.
   - Selectable LLM adapter supporting OpenAI and Google Gemini.
-  - Soniox STT (`stt-rt-v4`) + Cartesia TTS (`sonic-english`).
+  - Soniox STT (`stt-rt-v4`) + Soniox TTS (`en_us_female_1`).
   - WebRTC Transport with real-time SDP offer/answer exchange.
   - A premium, glowing dark-mode operator debug console (`web/`).
   - Unified `./run.sh` starter command.

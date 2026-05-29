@@ -13,7 +13,7 @@
 | Plivo ↔ server network | ~100 ms | Region co-location |
 | Soniox STT finalization | 150–300 ms | VAD endpointing tuning |
 | Router + LLM first token | 200–400 ms | Cheap/fast router model; streaming |
-| Cartesia TTS first byte | 150–250 ms | Streaming synthesis |
+| Soniox TTS first byte | 150–250 ms | Streaming synthesis |
 | **p50 total** | **≤ 800 ms** | Stream every stage; no buffering |
 
 - **p95 ≤ 1500 ms.** Measure **per-stage**, not just end-to-end.
@@ -37,7 +37,7 @@
 |---|---|
 | Soniox STT | WS reconnect; "could you repeat?" fallback prompt |
 | LLM (OpenAI/Gemini) | Timeout + circuit breaker; filler line; **failover to the other provider**, then retry once |
-| Cartesia TTS | Fallback voice/provider; shorten response |
+| Soniox TTS | Fallback voice/provider; shorten response |
 | Plivo media | Detect WS close → teardown + cleanup |
 | Specialist agent | Timeout → `return_to_router`; router apologizes/re-routes |
 
@@ -99,7 +99,7 @@
 ## 6. Internationalization
 
 - 60+ languages via Soniox; responses always in detected language.
-- TTS voice selection per language (Cartesia voice mapping).
+- TTS voice selection per language (Soniox voice mapping).
 - Numbers/dates/currency formatting localized in tool outputs.
 
 ---

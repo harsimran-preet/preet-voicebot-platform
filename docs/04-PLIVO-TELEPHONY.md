@@ -7,7 +7,7 @@
 ## 1. How Plivo + Pipecat fit together
 
 ```
-☎ Phone Call ↔ Plivo ↔ WebSocket audio stream ↔ Pipecat ↔ (Soniox STT → Agents → Cartesia TTS)
+☎ Phone Call ↔ Plivo ↔ WebSocket audio stream ↔ Pipecat ↔ (Soniox STT → Agents → Soniox TTS)
 ```
 
 - **Plivo** routes the PSTN call and streams real-time audio over a WebSocket.

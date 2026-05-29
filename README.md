@@ -21,7 +21,7 @@ A production-grade, **multi-agent voice AI platform** built on [Pipecat](https:/
 - **Telephony:** Plivo (`PlivoFrameSerializer` + `WebSocketServerTransport`)
 - **STT:** Soniox (`pipecat-ai[soniox]`, model `stt-rt-v4`)
 - **LLM:** OpenAI + Google Gemini (both enabled, pluggable per-agent)
-- **TTS:** Cartesia (default), pluggable
+- **TTS:** Soniox (default), pluggable
 - **Frontend:** `@pipecat-ai/voice-ui-kit`, `@pipecat-ai/client-react` `^1.4`, `@pipecat-ai/client-js` `^1.8`, React `^19.2`, Tailwind `^4.1`, Vite
 - **Transport (web):** `@pipecat-ai/small-webrtc-transport`
 
@@ -62,7 +62,6 @@ preet-voicebot-platform/
 1. **Configure API Keys**: Open `server/.env` and add your vendor credentials:
    ```dotenv
    SONIOX_API_KEY=your_soniox_key
-   CARTESIA_API_KEY=your_cartesia_key
    GOOGLE_API_KEY=your_gemini_key
    ```
 2. **Start Both Servers**: Run the unified concurrent launcher command:
