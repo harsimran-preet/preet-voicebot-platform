@@ -9,7 +9,7 @@ from pipecat.pipeline.runner import PipelineRunner
 
 # Import services
 from pipecat.services.soniox.stt import SonioxSTTService, SonioxSTTSettings
-from pipecat.services.cartesia.tts import CartesiaTTSService
+from pipecat.services.soniox.tts import SonioxTTSService, SonioxTTSSettings
 
 # Import subagent elements
 from pipecat_subagents.bus import AsyncQueueBus, BusBridgeProcessor
@@ -44,16 +44,9 @@ async def run_voice_pipeline(transport: Any, webrtc_connection: Any = None) -> N
         vad_force_turn_endpoint=True
     )
 
-    # 3. Cartesia TTS Service
-    cartesia_key = os.getenv("CARTESIA_API_KEY")
-    if not cartesia_key:
-        raise ValueError("CARTESIA_API_KEY environment variable is not set")
-    
-    cartesia_voice = os.getenv("CARTESIA_VOICE_ID", "a0e9987c-abaf-4752-bd35-40671e7955ee")
-    tts = CartesiaTTSService(
-        api_key=cartesia_key,
-        voice_id=cartesia_voice,
-        model="sonic-english"
+    # 3. Soniox TTS Service
+    tts = SonioxTTSService(
+        api_key=soniox_key
     )
 
     # 4. Multi-Agent Bus and Bridge Processor

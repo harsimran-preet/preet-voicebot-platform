@@ -547,7 +547,7 @@ function App() {
                 {/* 4. TTS first byte */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-400">Cartesia TTS Synthesis</span>
+                    <span className="text-slate-400">Soniox TTS Synthesis</span>
                     <span className={`font-bold ${ttsLatency ? "text-slate-300" : "text-slate-600"}`}>
                       {ttsLatency ? `${ttsLatency} ms` : "Offline"}
                     </span>
@@ -855,7 +855,7 @@ function App() {
           <span>•</span>
           <span>SUPPORT: OPENAI</span>
           <span>•</span>
-          <span>TTS: CARTESIA</span>
+          <span>TTS: SONIOX</span>
         </div>
       </footer>
     </div>
