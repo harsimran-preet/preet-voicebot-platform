@@ -1,0 +1,33 @@
+# Python / Server
+server/.venv/
+server/__pycache__/
+server/pipeline/__pycache__/
+server/server.log
+server/.env
+server/.env.local
+*.pyc
+
+# Node / Web
+web/node_modules/
+web/dist/
+web/dist-ssr/
+web/package-lock.json
+web/.env
+web/.env.local
+web/.env.development.local
+web/.env.test.local
+web/.env.production.local
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+web/pnpm-debug.log*
+
+# OS / IDEs
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
