@@ -14,26 +14,26 @@ Milestones are vertical slices — each ends in something runnable and demoable.
 
 ---
 
-## M1 — Single-agent web echo bot
+## M1 — Single-agent web echo bot ✅
 **Goal:** Prove the core pipeline over WebRTC with the Voice UI Kit.
-- [ ] Scaffold `server/` (FastAPI + Pipecat 1.3.0) and `web/` (Vite + Voice UI Kit).
-- [ ] `SmallWebRTCTransport` + `/api/offer`.
-- [ ] Soniox STT → LLM → Cartesia TTS, single hardcoded prompt.
-- [ ] **LLM adapter** wrapping `OpenAILLMService` + `GoogleLLMService` (env-selectable provider).
-- [ ] `ConsoleTemplate` connects and you can talk to the bot in the browser.
+- [x] Scaffold `server/` (FastAPI + Pipecat 1.3.0) and `web/` (Vite + Voice UI Kit).
+- [x] `SmallWebRTCTransport` + `/api/offer`.
+- [x] Soniox STT → LLM → Cartesia TTS, single hardcoded prompt.
+- [x] **LLM adapter** wrapping `OpenAILLMService` + `GoogleLLMService` (env-selectable provider).
+- [x] `ConsoleTemplate` connects and you can talk to the bot in the browser.
 **Exit:** Browser conversation works; transcript + latency visible in console.
 **Demo:** Open localhost console, hold a multilingual conversation.
 
 ---
 
-## M2 — Multi-agent handoff (web)
+## M2 — Multi-agent handoff (web) ✅
 **Goal:** Router → 1 specialist with retained context.
-- [ ] Add `pipecat-ai-subagents`; stand up AgentBus + AgentRunner (local mode).
-- [ ] Router agent (intent classify + language ID wiring), default LLM **Gemini**.
-- [ ] Per-agent provider selection (`ROUTER_LLM`/`SPECIALIST_LLM`) + cross-provider failover.
-- [ ] One specialist (Support) as free-form LLM agent.
-- [ ] Implement `handoff` + `return_to_router` with summarize-on-handoff.
-- [ ] Active-agent indicator in the console.
+- [x] Add `pipecat-ai-subagents`; stand up AgentBus + AgentRunner (local mode).
+- [x] Router agent (intent classify + language ID wiring), default LLM **Gemini**.
+- [x] Per-agent provider selection (`ROUTER_LLM`/`SPECIALIST_LLM`) + cross-provider failover.
+- [x] One specialist (Support) as free-form LLM agent.
+- [x] Implement `handoff` + `return_to_router` with summarize-on-handoff.
+- [x] Active-agent indicator in the console.
 **Exit:** Mid-call handoff works; context/slots survive; language sticky.
 **Demo:** Ask a general question → router; ask support question → handoff.
 
